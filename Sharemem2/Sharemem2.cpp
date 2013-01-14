@@ -24,7 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		//std::strcpy(static_cast<char* >(mmap.get_address()), "Hello World!\n");
 		printf( "sharedmem : %s\n", static_cast<char* >(mmap.get_address()) );
 
-// 		shared_memory_object::remove("Hello");
+ 		shared_memory_object::remove("Hello");
 
 	} 
 	catch (interprocess_exception&e) 

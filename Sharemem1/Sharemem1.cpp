@@ -4,21 +4,25 @@
 #include "stdafx.h"
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
 #include <iostream> 
 
+//using namespace boost;
 using namespace boost::interprocess;
-using namespace std;
+//using namespace std;
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	try 
 	{
-		// creating our first shared memory object.
+		shared_memory_object::remove("Hello");
+
  		shared_memory_object sharedmem1 (create_only, "Hello", read_write);
 
 		// setting the size of the shared memory
-		sharedmem1.truncate (256);
+		sharedmem1.truncate (65536);
 
 		// map the shared memory to current process 
 		mapped_region mmap (sharedmem1, read_write, 0, 256); 
@@ -31,8 +35,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	catch (interprocess_exception&e) 
 	{
 		// .. .  clean up 
-		cout << e.what() << endl;
-		printf( "client1 error" );
+		std::cout << e.what() << std::endl;
+		std::cout << "client1 error\n";
 	}
 
 	return 0;

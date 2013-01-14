@@ -15,6 +15,26 @@ using namespace boost::interprocess;
 using namespace std;
 
 
+template<class T>
+struct sA
+{
+	static T func(T t)
+	{
+		return t;
+	}
+};
+
+template<>
+struct sA<int>
+{
+	static int func(int t)
+	{
+		return t + 1;
+	}
+};
+
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	try 
