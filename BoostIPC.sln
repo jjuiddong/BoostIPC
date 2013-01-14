@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SharememHeap", "SharememHea
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SharememHeapMap", "SharememHeapMap\SharememHeapMap.vcproj", "{369CA8F7-A156-42FA-943B-476DF1CF454B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SharememHeapMapTest", "SharememHeapMapTest\SharememHeapMapTest.vcproj", "{053E75EA-1A91-48EC-BD60-D5903391E8E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -49,6 +51,10 @@ Global
 		{369CA8F7-A156-42FA-943B-476DF1CF454B}.Debug|Win32.Build.0 = Debug|Win32
 		{369CA8F7-A156-42FA-943B-476DF1CF454B}.Release|Win32.ActiveCfg = Release|Win32
 		{369CA8F7-A156-42FA-943B-476DF1CF454B}.Release|Win32.Build.0 = Release|Win32
+		{053E75EA-1A91-48EC-BD60-D5903391E8E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{053E75EA-1A91-48EC-BD60-D5903391E8E8}.Debug|Win32.Build.0 = Debug|Win32
+		{053E75EA-1A91-48EC-BD60-D5903391E8E8}.Release|Win32.ActiveCfg = Release|Win32
+		{053E75EA-1A91-48EC-BD60-D5903391E8E8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
