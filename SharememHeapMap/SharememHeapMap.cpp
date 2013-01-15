@@ -6,7 +6,6 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/allocators/node_allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <iostream> 
 #include <string>
@@ -75,6 +74,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		std::cout << e.what() << std::endl;
 		std::cout << "client1 error\n";
 	}
+/**/
 
 	return 0;
 }
