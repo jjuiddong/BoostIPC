@@ -5,6 +5,7 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/managed_windows_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <iostream> 
@@ -30,6 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		// creating our first shared memory object.
 		managed_shared_memory segment(create_only, "MySharedMemory", 65536);
+//		mapped_region region(segment, read_write);
 
 		typedef managed_shared_memory::segment_manager						segment_manager_t;
 		typedef allocator<char, segment_manager_t>							char_allocator;
@@ -67,6 +69,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		std::cout << "count = " << cnt << std::endl;
+
+
 	}
 	catch (interprocess_exception&e) 
 	{

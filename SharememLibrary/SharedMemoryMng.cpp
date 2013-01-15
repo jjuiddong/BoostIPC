@@ -4,8 +4,10 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/unordered_map.hpp>     //boost::unordered_map
+//#include <boost/interprocess/containers/map.hpp>
 #include <functional>                  //std::equal_to
 #include <boost/functional/hash.hpp>   //boost::hash
 
@@ -19,10 +21,12 @@ namespace sharedmemory
 
 	typedef struct _complex_data
 	{
-		void *ptr;
+		//void *ptr;
 		size_t size;
+		// 공유메모리 주소는 프로세스에 따라 달라지므로 handle을 공유해야 한다.
+		managed_shared_memory::handle_t handle;
 		_complex_data() {}
-		_complex_data(void *p, size_t s) :ptr(p), size(s) {}
+		_complex_data(size_t s, managed_shared_memory::handle_t h) : size(s),handle(h) {}
 	} complex_data;
 
 	typedef std::pair<const shm_string, complex_data>					shm_map_value_type;
@@ -130,7 +134,10 @@ void* sharedmemory::Allocate(const std::string &name, size_t size)
 	void *ptr = n_pSegment->allocate(size, std::nothrow_t());
 	RETV(!ptr, NULL);
 
-	n_pMap->insert( shm_map_value_type(str,complex_data(ptr,size)) );
+	// 공유메모리 주소는 프로세스에 따라 달라지므로 handle을 공유해야 한다.
+	managed_shared_memory::handle_t handle = n_pSegment->get_handle_from_address(ptr);
+
+	n_pMap->insert( shm_map_value_type(str,complex_data(size,handle)) );
 	return ptr;
 }
 
@@ -143,10 +150,12 @@ void sharedmemory::DeAllocate(void *ptr)
 	RET(!n_pSegment);
 	RET(!n_pMap);
 
+	const managed_shared_memory::handle_t handle = n_pSegment->get_handle_from_address(ptr);
+
 	shm_complex_map::iterator it = n_pMap->begin();
 	while (n_pMap->end() != it)
 	{
-		if (it->second.ptr == ptr)
+		if (it->second.handle == handle)
 		{
 			n_pSegment->deallocate(ptr);
 			n_pMap->erase(it);
@@ -168,7 +177,9 @@ void sharedmemory::EnumerateMemoryInfo(OUT MemoryList &memList)
 	shm_complex_map::iterator it = n_pMap->begin();
 	while (n_pMap->end() != it)
 	{
-		memList.push_back( SMemoryInfo(it->first.c_str(), it->second.ptr, it->second.size) );
+		void *ptr = n_pSegment->get_address_from_handle(it->second.handle);
+		memList.push_back( SMemoryInfo(it->first.c_str(), ptr, it->second.size) );
 		++it;
 	}
 }
+

@@ -10,7 +10,7 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	sharedmemory::Init( "TestSharedMem", sharedmemory::SHARED_CLIENT );
+	sharedmemory::Init( "MySharedMemory", sharedmemory::SHARED_CLIENT );
 
 	sharedmemory::MemoryList memList;
 	sharedmemory::EnumerateMemoryInfo( memList );
@@ -18,6 +18,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOST_FOREACH(sharedmemory::SMemoryInfo &info, memList)
 	{
 		std::cout << "name: " << info.name << ", ptr: " << info.ptr << ", size: " << info.size << std::endl;
+		//*((int*)info.ptr) = 10;
+
 	}
 
 	sharedmemory::Release();
