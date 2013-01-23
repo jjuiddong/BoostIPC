@@ -21,7 +21,7 @@ namespace sharedmemory
 
 	void*	Allocate(const std::string &name, size_t size);
 	void	DeAllocate(void *ptr);
-
+	void*	AllocateAnonymous(const std::string &typeName, size_t size);
 	
 	typedef struct _SMemoryInfo
 	{
@@ -33,7 +33,10 @@ namespace sharedmemory
 	} SMemoryInfo;
 	typedef std::list<SMemoryInfo> MemoryList;
 
-	void	EnumerateMemoryInfo(OUT MemoryList &memList);
+	void		EnumerateMemoryInfo(OUT MemoryList &memList);
+	std::string ParseObjectName(const std::string &objectName);
+	bool		FindMemoryInfo(const std::string &name, OUT SMemoryInfo &info);
+	void*	MemoryMapping(const void *srcPtr );
 
 }
 

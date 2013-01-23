@@ -7,7 +7,7 @@
 // 공유메모리에 객체가 생성된다. (CRTP 패턴)
 // Boost shared memory 라이브러리를 이용함
 //
-// CSharedMem 클래스 상속받는 법
+// 1. CSharedMem 클래스 상속받는 법
 //
 // DECLARE_TYPE_NAME(CCustomClass);
 // class CCustomClass : public sharedmemory::CSharedMem<CCustomClass, TYPE_NAME(CCustomClass)>
@@ -15,6 +15,15 @@
 // ...
 // }
 //
+//
+// 2. namespace 나 클래스 내부에 선언된 객체를 상속받는 법
+//
+// DECLARE_TYPE_NAME_SCOPE(NameSpace, CCustomClass);
+// class CCustomClass : public sharedmemory::CSharedMem<CCustomClass, TYPE_NAME(CCustomClass)>
+// {
+// ...
+// }
+
 //------------------------------------------------------------------------
 #ifndef __SHAREDMEMORY_H__
 #define __SHAREDMEMORY_H__
@@ -23,10 +32,17 @@
 
 
 #define DECLARE_TYPE_NAME(className)					\
-struct className##typeNameWrap							\
-{														\
+struct className##typeNameWrap								\
+{																						\
 	static char* typeName() { return #className; }		\
 };
+
+#define DECLARE_TYPE_NAME_SCOPE(scope, className)				\
+struct className##typeNameWrap													\
+{																											\
+	static char* typeName() { return #scope"::"#className; }			\
+};
+
 #define TYPE_NAME(className)	className##typeNameWrap
 
 
@@ -39,9 +55,15 @@ namespace sharedmemory
 		static int m_Count;
 
 	public:
-		static void* operator new (size_t size)
+		void* operator new (size_t size)
 		{
 			return Allocate(size);
+		}
+		//attachTypeName : typeName에 추가적으로 붙게되는 이름
+		void* operator new (size_t size, char *attachTypeName)
+		{			
+			// Name = typeName + # + attachTypeName + m_Count
+			return Allocate(size, attachTypeName);
 		}
 		void* operator new[] (size_t size)
 		{
@@ -59,20 +81,27 @@ namespace sharedmemory
 			return Allocate(size);
 		}
 
-		static void operator delete (void *ptr)
+		void operator delete (void *ptr)
 		{
 			sharedmemory::DeAllocate(ptr);
 		}
-		static void operator delete[] (void *ptr)
+		void operator delete (void *ptr, char *attachTypeName)
+		{
+			sharedmemory::DeAllocate(ptr);
+		}
+		void operator delete[] (void *ptr)
 		{
 			sharedmemory::DeAllocate(ptr);
 		}
 
 	private:
-		static void* Allocate(const size_t size)
+		static void* Allocate(const size_t size, char *attachTypeName=NULL)
 		{
 			std::stringstream ss;
-			ss << typeName::typeName() << "#" << ++m_Count;
+			ss << typeName::typeName() << "#";
+			if (attachTypeName)
+				ss << attachTypeName;
+			ss << ++m_Count;
 			return sharedmemory::Allocate(ss.str(), size);
 		}
 	};

@@ -21,12 +21,14 @@ namespace sharedmemory
 
 	typedef struct _complex_data
 	{
-		//void *ptr;
-		size_t size;
 		// 공유메모리 주소는 프로세스에 따라 달라지므로 handle을 공유해야 한다.
 		managed_shared_memory::handle_t handle;
+		void *srcPtr;	// 메모리를 생성한 프로세스에서의 주소 
+								// (다른 프로세스에서 검색할 때 쓰인다.)
+		size_t size;
+
 		_complex_data() {}
-		_complex_data(size_t s, managed_shared_memory::handle_t h) : size(s),handle(h) {}
+		_complex_data(size_t s, managed_shared_memory::handle_t h, void *ptr) : size(s),handle(h),srcPtr(ptr) {}
 	} complex_data;
 
 	typedef std::pair<const shm_string, complex_data>					shm_map_value_type;
@@ -40,6 +42,7 @@ namespace sharedmemory
 	shm_complex_map *n_pMap = NULL;
 	std::string n_Name;
 	SHARED_TYPE n_Type;
+	int	n_AnonymousCount=0;
 
 	// functions
 	bool InitSharedMemory_Server(const std::string &name, const size_t size);
@@ -118,6 +121,7 @@ bool sharedmemory::InitSharedMemory_Server(const std::string &name, const size_t
 //------------------------------------------------------------------------
 // 메모리를 할당해서 리턴한다.
 // map에 할당받은 객체의 이름과 주소를 저장한다.
+// name : 중복되지 않은 유니크한 이름이어야 한다. 중복된 이름이 존재하면 실패
 //------------------------------------------------------------------------
 void* sharedmemory::Allocate(const std::string &name, size_t size)
 {
@@ -137,8 +141,21 @@ void* sharedmemory::Allocate(const std::string &name, size_t size)
 	// 공유메모리 주소는 프로세스에 따라 달라지므로 handle을 공유해야 한다.
 	managed_shared_memory::handle_t handle = n_pSegment->get_handle_from_address(ptr);
 
-	n_pMap->insert( shm_map_value_type(str,complex_data(size,handle)) );
+	n_pMap->insert( shm_map_value_type(str,complex_data(size,handle,ptr)) );
 	return ptr;
+}
+
+
+//------------------------------------------------------------------------
+// CSharedMem<T>를 거치지 않고, 동적으로 할당할때 쓰이는 함수다.
+// 생성자는 호출하지 않고, 메모리만 리턴된다.
+//------------------------------------------------------------------------
+void* sharedmemory::AllocateAnonymous(const std::string &typeName, size_t size)
+{
+	++n_AnonymousCount;
+	std::stringstream ss;
+	ss << "Anonymous@" << typeName << "#" << size;
+	return Allocate(ss.str(), size);
 }
 
 
@@ -183,3 +200,59 @@ void sharedmemory::EnumerateMemoryInfo(OUT MemoryList &memList)
 	}
 }
 
+
+//------------------------------------------------------------------------
+// TypeName%Count 형태로 되어있는 타입이름을 TypeName만 리턴하게 한다.
+//------------------------------------------------------------------------
+std::string sharedmemory::ParseObjectName(const std::string &objectName)
+{
+	const int offset = objectName.find('#');
+	if (std::string::npos == offset)
+		return objectName;
+	else
+		return objectName.substr(0,offset);
+}
+
+
+//------------------------------------------------------------------------
+// name에 해당하는 정보를 공유메모리에서 찾아서 리턴한다.
+//------------------------------------------------------------------------
+bool sharedmemory::FindMemoryInfo(const std::string &name, OUT SMemoryInfo &info)
+{
+	RETV(!n_pSegment, false);
+	RETV(!n_pMap, false);
+
+	// 현재 Map에 데이타를 찾으려면 공유메모리를 이용하는 방법밖에 없다.
+	shm_string str( n_pSegment->get_allocator<shm_string>() );
+	str = name.c_str();
+	shm_complex_map::iterator it = n_pMap->find( str );
+	if (n_pMap->end() == it)
+		return false; // 없다면 실패
+	
+	void *ptr = n_pSegment->get_address_from_handle(it->second.handle);
+	info = SMemoryInfo(it->first.c_str(), ptr, it->second.size);
+	return true;
+}
+
+
+//------------------------------------------------------------------------
+// 메모리를 생성한 프로세의 주소 srcPtr을 타겟 프로세스의
+// 메모리 주소로 매핑시켜 리턴한다.
+//------------------------------------------------------------------------
+void* sharedmemory::MemoryMapping(const void *srcPtr )
+{
+	RETV(!n_pSegment, NULL);
+	RETV(!n_pMap, NULL);
+
+	shm_complex_map::iterator it = n_pMap->begin();
+	while (n_pMap->end() != it)
+	{
+		if (it->second.srcPtr == srcPtr)
+		{
+			void *ptr = n_pSegment->get_address_from_handle(it->second.handle);
+			return ptr;
+		}
+		++it;
+	}
+	return NULL;
+}

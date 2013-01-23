@@ -5,6 +5,9 @@
 #include "SharedMemoryMng.h"
 #include "SharedMemory.h"
 #include <iostream>
+#include <Windows.h>
+
+using namespace std;
 
 DECLARE_TYPE_NAME(CCustomClass);
 class CCustomClass : public sharedmemory::CSharedMem<CCustomClass, TYPE_NAME(CCustomClass)>
@@ -28,21 +31,111 @@ public:
 };
 
 
+struct SCustomSubStruct
+{
+	int a0;
+	unsigned int a1;
+	float b0;
+	char c0;
+	unsigned char c1;
+	bool d0;
+	short e0;
+	unsigned short e1;
+	BYTE f0;
+	DWORD g0;
+
+};
+
+DECLARE_TYPE_NAME(_SData);
+typedef struct _SData : public sharedmemory::CSharedMem<_SData, TYPE_NAME(_SData)>
+{
+	int a;
+	char b;
+	float c;
+
+} SData;
+
+enum VAR_TYPE
+{
+	TYPE1,
+	TYPE2,
+	TYPE3,
+	TYPE4,
+};
+
 DECLARE_TYPE_NAME(SCustomStruct);
 struct SCustomStruct : public sharedmemory::CSharedMem<SCustomStruct, TYPE_NAME(SCustomStruct)>
 {
 	int a;
 	float b;
-	short c;
-	char d;
-	double e;
+// 	short c;
+// 	char d;
+// 	double e;
+// 	bool f;
+	int arr[10];
+	SCustomSubStruct sub[5];
+	char strings[ 32];
+	SData data1;
+	SData *pdata2;
+	VAR_TYPE varType;
+
 };
 
+
+namespace testName
+{
+	class CA
+	{
+	public:
+		CA() {}
+		virtual ~CA() {}
+		int m_id;
+		virtual void func() 
+		{
+			cout << "CA::func()\n";
+		}
+	};
+
+	class CC
+	{
+	public:
+		CC() {}
+		virtual ~CC() {}
+		float m_ccVal;
+		string m_str;
+	};
+
+	class CD
+	{
+	public:
+		CD() {
+			strcpy_s(m_name, sizeof(m_name), "hello");
+		}
+		char m_name[32];
+	};
+
+	DECLARE_TYPE_NAME_SCOPE(testName, CB);
+	class CB : public CA, public CC, public CD, public sharedmemory::CSharedMem<CB, TYPE_NAME(CB)>
+	{
+	public:
+		CB() {}
+		virtual ~CB() {}
+		double m_val;
+		virtual void func()
+		{
+			cout << "CB::func()\n";
+		}
+	};
+
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	sharedmemory::Init( "MySharedMemory", sharedmemory::SHARED_SERVER );
 
+	testName::CB *pcb = new ("LookatMe") testName::CB();
+	pcb->m_id = 101;
+	pcb->m_val = 12.34f;
 
 	CCustomClass *p0 = new CCustomClass(11,12);
 	CCustomClass *p1 = new CCustomClass[ 10];
@@ -54,13 +147,36 @@ int _tmain(int argc, _TCHAR* argv[])
 	p1[ 0].m_c = 10;
 	std::cout << p0->m_a << " " << p0->m_b << " " << p0->m_c << std::endl;
 
-
 	SCustomStruct *p11 = new SCustomStruct();
 	SCustomStruct *p12 = new SCustomStruct();
 	SCustomStruct *p13 = new SCustomStruct();
-	p11->a = 1;
-	p12->a = 2;
-	p13->a = 3;
+
+// 	p11->a = 1;
+// 	p11->f = false;
+	p11->pdata2 = new SData;
+	p11->pdata2->a = 1234;
+	p11->varType = TYPE3;
+
+
+	p11->arr[ 0] = 1;
+	p11->arr[ 1] = 2;
+	p11->arr[ 2] = 3;
+	p11->sub[0].c0 = 'a';
+	p11->sub[0].d0 = true;
+	p11->sub[0].e0 = 101;
+
+
+// 	p12->a = 2;
+// 	p12->f = true;
+
+// 	p13->a = 3;
+// 	p13->f = false;
+	p13->arr[ 0] = 1;
+	p13->arr[ 1] = 2;
+	p13->arr[ 2] = 3;
+	p13->sub[0].c0 = 'z';
+	p13->sub[0].d0 = false;
+	p13->sub[0].e0 = 123;
 
 
 //	delete p0;
