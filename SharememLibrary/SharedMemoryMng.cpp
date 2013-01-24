@@ -1,23 +1,18 @@
 
 #include "stdafx.h"
 #include "SharedMemoryMng.h"
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/containers/string.hpp>
+#include "SharedMemoryContainer.h"
+#include <boost/interprocess/containers/string.hpp>	// basic_string
 #include <boost/unordered_map.hpp>     //boost::unordered_map
-//#include <boost/interprocess/containers/map.hpp>
-#include <functional>                  //std::equal_to
-#include <boost/functional/hash.hpp>   //boost::hash
+#include <functional>									//std::equal_to
+#include <boost/functional/hash.hpp>		//boost::hash
 
-using namespace boost::interprocess;
 
 namespace sharedmemory
 {
-	typedef managed_shared_memory::segment_manager						segment_manager_t;
-	typedef allocator<char, segment_manager_t>							char_allocator;
-	typedef basic_string<char, std::char_traits<char>, char_allocator>	shm_string;
+//	using namespace boost::interprocess;
+
+	typedef basic_string<char, std::char_traits<char>, char_allocator>		shm_basic_string;
 
 	typedef struct _complex_data
 	{
@@ -31,11 +26,11 @@ namespace sharedmemory
 		_complex_data(size_t s, managed_shared_memory::handle_t h, void *ptr) : size(s),handle(h),srcPtr(ptr) {}
 	} complex_data;
 
-	typedef std::pair<const shm_string, complex_data>					shm_map_value_type;
+	typedef std::pair<const shm_basic_string, complex_data>					shm_map_value_type;
 	typedef allocator<shm_map_value_type, segment_manager_t>			shm_map_type_allocator;
-	typedef boost::unordered_map< shm_string, complex_data,
-		boost::hash<shm_string>, std::equal_to<shm_string>,
-		shm_map_type_allocator>											shm_complex_map;
+	typedef boost::unordered_map< shm_basic_string, complex_data,
+		boost::hash<shm_basic_string>, std::equal_to<shm_basic_string>,
+		shm_map_type_allocator>																	shm_complex_map;
 
 	// variables
 	managed_shared_memory *n_pSegment = NULL;
@@ -111,7 +106,7 @@ bool sharedmemory::InitSharedMemory_Server(const std::string &name, const size_t
 	shared_memory_object::remove(name.c_str());
 	n_pSegment = new managed_shared_memory(create_only, name.c_str(),  size);
 	n_pMap = n_pSegment->construct<shm_complex_map>("StringKeyPointerValueMap")
-		(10, boost::hash<shm_string>(), std::equal_to<shm_string>(), 
+		(10, boost::hash<shm_basic_string>(), std::equal_to<shm_basic_string>(), 
 		n_pSegment->get_allocator<shm_map_value_type>() );
 
 	return true;
@@ -129,7 +124,7 @@ void* sharedmemory::Allocate(const std::string &name, size_t size)
 	RETV(!n_pMap, NULL);
 
 	// 현재 Map에 데이타를 찾으려면 공유메모리를 이용하는 방법 밖에 없다.
-	shm_string str( n_pSegment->get_allocator<shm_string>() );
+	shm_basic_string str( n_pSegment->get_allocator<shm_basic_string>() );
 	str = name.c_str();
 	shm_complex_map::iterator it = n_pMap->find( str );
 	if (n_pMap->end() != it)
@@ -223,7 +218,7 @@ bool sharedmemory::FindMemoryInfo(const std::string &name, OUT SMemoryInfo &info
 	RETV(!n_pMap, false);
 
 	// 현재 Map에 데이타를 찾으려면 공유메모리를 이용하는 방법밖에 없다.
-	shm_string str( n_pSegment->get_allocator<shm_string>() );
+	shm_basic_string str( n_pSegment->get_allocator<shm_basic_string>() );
 	str = name.c_str();
 	shm_complex_map::iterator it = n_pMap->find( str );
 	if (n_pMap->end() == it)
@@ -256,3 +251,18 @@ void* sharedmemory::MemoryMapping(const void *srcPtr )
 	}
 	return NULL;
 }
+
+
+//------------------------------------------------------------------------
+// ptr 인 공유메모리를 가르킨다면 true를 리턴한다.
+//------------------------------------------------------------------------
+bool	sharedmemory::CheckValidAddress(const void *ptr )
+{
+	RETV(!n_pSegment, false);
+	RETV(!n_pMap, false);
+
+	void *shm_ptr = n_pSegment->get_address();
+	const size_t size = n_pSegment->get_size();
+	return (shm_ptr <= ptr) && (((char*)shm_ptr + size) > ptr);
+}
+

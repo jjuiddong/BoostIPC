@@ -60,8 +60,9 @@ namespace sharedmemory
 			return Allocate(size);
 		}
 		//attachTypeName : typeName에 추가적으로 붙게되는 이름
+		// 호출 방법: Type *p = new ("attachTypeName") Type();
 		void* operator new (size_t size, char *attachTypeName)
-		{			
+		{
 			// Name = typeName + # + attachTypeName + m_Count
 			return Allocate(size, attachTypeName);
 		}

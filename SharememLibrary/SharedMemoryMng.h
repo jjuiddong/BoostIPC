@@ -8,6 +8,8 @@
 #ifndef __SHAREDMEMORYMNG_H__
 #define __SHAREDMEMORYMNG_H__
 
+#include "SharedMemoryContainer.h"
+
 namespace sharedmemory
 {
 	enum SHARED_TYPE
@@ -16,13 +18,21 @@ namespace sharedmemory
 		SHARED_CLIENT	// 공유 메모리를 검색하는 프로세스
 	};
 
-	bool	Init( const std::string &name, SHARED_TYPE type, const size_t size=65536 );
-	void	Release();
+	template<class T>
+	typename shm_allocator<T>::type GetAllocator()
+	{
+		assert(n_pSegment);
+		return shm_allocator<T>::type( n_pSegment->get_segment_manager() );
+	}
 
+	bool		Init( const std::string &name, SHARED_TYPE type, const size_t size=10240 ); // size=65536
+	void		Release();
 	void*	Allocate(const std::string &name, size_t size);
-	void	DeAllocate(void *ptr);
+	void		DeAllocate(void *ptr);
 	void*	AllocateAnonymous(const std::string &typeName, size_t size);
-	
+
+
+	// Memory Info
 	typedef struct _SMemoryInfo
 	{
 		std::string name;
@@ -37,7 +47,9 @@ namespace sharedmemory
 	std::string ParseObjectName(const std::string &objectName);
 	bool		FindMemoryInfo(const std::string &name, OUT SMemoryInfo &info);
 	void*	MemoryMapping(const void *srcPtr );
+	bool		CheckValidAddress(const void *ptr );
 
+	extern managed_shared_memory *n_pSegment;
 }
 
 #endif // __SHAREDMEMORYMNG_H__

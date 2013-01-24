@@ -171,7 +171,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\SharedMemoryContainer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SharedMemoryMng.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SharedMemoryString.cpp"
 				>
 			</File>
 			<File
@@ -209,7 +217,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SharedMemoryContainer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SharedMemoryList.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SharedMemoryMng.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SharedMemoryString.h"
 				>
 			</File>
 			<File

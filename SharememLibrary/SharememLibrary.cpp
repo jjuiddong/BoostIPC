@@ -4,10 +4,12 @@
 #include "stdafx.h"
 #include "SharedMemoryMng.h"
 #include "SharedMemory.h"
+#include "SharedMemoryString.h"
+#include "SharedMemoryList.h"
 #include <iostream>
 #include <Windows.h>
 
-using namespace std;
+//using namespace std;
 
 DECLARE_TYPE_NAME(CCustomClass);
 class CCustomClass : public sharedmemory::CSharedMem<CCustomClass, TYPE_NAME(CCustomClass)>
@@ -87,12 +89,16 @@ namespace testName
 	class CA
 	{
 	public:
-		CA() {}
+		CA() {
+			m_pStr = new char[32];
+			strcpy_s(m_pStr, 32, "goodbye");
+		}
 		virtual ~CA() {}
 		int m_id;
+		char *m_pStr;
 		virtual void func() 
 		{
-			cout << "CA::func()\n";
+			std::cout << "CA::func()\n";
 		}
 	};
 
@@ -102,16 +108,19 @@ namespace testName
 		CC() {}
 		virtual ~CC() {}
 		float m_ccVal;
-		string m_str;
+		std::string m_str;
+		sharedmemory::shm_list< sharedmemory::shm_string > lst;
 	};
 
 	class CD
 	{
 	public:
-		CD() {
+		CD() : m_shmString("shm_string test hello")
+		{
 			strcpy_s(m_name, sizeof(m_name), "hello");
 		}
 		char m_name[32];
+		sharedmemory::shm_string m_shmString;
 	};
 
 	DECLARE_TYPE_NAME_SCOPE(testName, CB);
@@ -123,7 +132,7 @@ namespace testName
 		double m_val;
 		virtual void func()
 		{
-			cout << "CB::func()\n";
+			std::cout << "CB::func()\n";
 		}
 	};
 
@@ -133,9 +142,20 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	sharedmemory::Init( "MySharedMemory", sharedmemory::SHARED_SERVER );
 
+  	sharedmemory::shm_string str2;
+  	str2 = "aaa";
+	std::cout << str2 << std::endl;
+
 	testName::CB *pcb = new ("LookatMe") testName::CB();
 	pcb->m_id = 101;
 	pcb->m_val = 12.34f;
+	pcb->func();
+
+	pcb->lst.push_back( "test1" );
+	pcb->lst.push_back( "test2" );
+	pcb->lst.push_back( "test3" );
+	pcb->lst.push_back( "test4" );
+
 
 	CCustomClass *p0 = new CCustomClass(11,12);
 	CCustomClass *p1 = new CCustomClass[ 10];
