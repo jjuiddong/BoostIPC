@@ -30,7 +30,6 @@ namespace sharedmemory
 			basic_list::operator =(rhs);
 		}
 	};
-
 }
 
 #endif // __SHAREDMEMORYLIST_H__

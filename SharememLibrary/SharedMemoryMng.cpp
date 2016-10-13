@@ -20,6 +20,8 @@ namespace sharedmemory
 		managed_shared_memory::handle_t handle;
 		void *srcPtr;	// 메모리를 생성한 프로세스에서의 주소 
 								// (다른 프로세스에서 검색할 때 쓰인다.)
+		bool isArray;	// 배열일때 true가 된다. 배열로 선언한 포인터는 첫번째
+								// 4byte에 배열길이가 저장되어 있다. (아직 적용안됨)
 		size_t size;
 
 		_complex_data() {}
